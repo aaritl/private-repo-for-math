@@ -7,6 +7,7 @@
 #   Bonus:   group the final cities into "types" with K-Means (machine learning)
 #
 # HOW A PLACE GETS A SCORE (same in every round):
+#   0. Cap extreme values (outliers), so one extreme place can't distort the scale.
 #   1. Rescale each criterion to 0..1, where 1 = best.
 #   2. Give each criterion a weight (how important it is), using the entropy method.
 #   3. Score = weighted average of the criteria the place has data for.
@@ -30,6 +31,7 @@ COUNTRIES_TO_KEEP = 30     # round 1 keeps this many countries
 KEEP_PER_PARENT = 5        # rounds 2 and 3 keep this many per country / per region
 MIN_DATA = 0.60            # a place needs data for 60% of the importance to be ranked
 NUMBER_OF_TYPES = 3        # K-Means: how many groups to split the final cities into
+OUTLIER_CAP = 0.05         # cap the lowest 5% and highest 5% of each criterion (0 = turn off)
 
 # For each round: criterion name -> is "higher" or "lower" better?
 # Each name is a file: data/input/<round>/<name>.csv  with columns geo_id, value
@@ -177,24 +179,34 @@ def score_places(table, round_name, weights=None):
     if not columns:
         raise ValueError("No data yet! Fill in the CSV files in " + str(DATA / "input" / round_name))
 
-    # 4a. Rescale every criterion to 0..1 so dollars, percents, etc. can be compared.
-    scaled = pd.DataFrame(MinMaxScaler().fit_transform(table[columns]),
+    # 4a. Cap outliers (winsorizing). Same idea as Huber loss: extreme values still
+    #     count, but they can't pull everything else around.
+    #     Example: GDP of $140k vs most countries at $2k-$60k. Without the cap,
+    #     the $140k country sets the top of the scale and squeezes everyone else near 0.
+    #     With the cap, anything above the 95th percentile is treated as the 95th percentile.
+    values = table[columns]
+    lowest_allowed = values.quantile(OUTLIER_CAP)
+    highest_allowed = values.quantile(1 - OUTLIER_CAP)
+    values = values.clip(lowest_allowed, highest_allowed, axis=1)
+
+    # 4b. Rescale every criterion to 0..1 so dollars, percents, etc. can be compared.
+    scaled = pd.DataFrame(MinMaxScaler().fit_transform(values),
                           columns=columns, index=table.index)
     for name in columns:
         if directions[name] == "lower":
             scaled[name] = 1 - scaled[name]   # flip it, so 1 is always the best
 
-    # 4b. Weights: calculate them, unless they were given (the what-if test keeps them fixed).
+    # 4c. Weights: calculate them, unless they were given (the what-if test keeps them fixed).
     if weights is None:
         weights = entropy_weights(scaled)
 
-    # 4c. Score = weighted average, using ONLY the criteria the place has data for.
+    # 4d. Score = weighted average, using ONLY the criteria the place has data for.
     #     (A missing value is skipped — it does not count as 0.)
     table = table.copy()
     table["data_share"] = (scaled.notna() * weights).sum(axis=1)  # importance we have data for
     table["score"] = (scaled * weights).sum(axis=1) / table["data_share"]
 
-    # 4d. Rank places that have enough data (1 = best). The rest get no rank.
+    # 4e. Rank places that have enough data (1 = best). The rest get no rank.
     enough = table["data_share"] >= MIN_DATA
     table["rank"] = table.loc[enough, "score"].rank(ascending=False, method="min")
     return table.sort_values("score", ascending=False), weights, scaled
