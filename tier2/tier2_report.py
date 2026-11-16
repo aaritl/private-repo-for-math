@@ -14,7 +14,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 OUT = Path(sys.argv[1])
 here = Path(__file__).parent
 log = subprocess.run([sys.executable, str(here / "tier2_regions.py"), str(here / "oecd_raw"),
-                      str(here / "run/data/places/countryInfo.txt"), str(OUT / "tier1_country_ranking_v2.csv"), str(OUT)],
+                      str(here / "run/data/places/countryInfo.txt"), str(OUT / "tier1_country_ranking.csv"), str(OUT)],
                      capture_output=True, text=True, check=True).stdout
 info = {l.split(":")[0]: l.split(":", 1)[1].strip() for l in log.splitlines() if ":" in l and not l.startswith(" ")}
 weights = eval(info["weights %"])
@@ -30,7 +30,7 @@ SHORT = {"homicide_rate": "Homicide", "vehicle_theft_rate": "Vehicle theft", "pm
 
 ranked = pd.read_csv(OUT / "tier2_region_ranking.csv")
 winners = pd.read_csv(OUT / "tier2_regions_to_tier3.csv")
-t1 = pd.read_csv(OUT / "tier1_country_ranking_v2.csv", keep_default_na=False, na_values=[""]).head(30)
+t1 = pd.read_csv(OUT / "tier1_country_ranking.csv", keep_default_na=False, na_values=[""]).head(30)
 t1_rank = dict(zip(t1.country, t1["rank"]))
 
 FIG = OUT / "fig_tier2"; FIG.mkdir(exist_ok=True)
@@ -69,7 +69,7 @@ story = [Paragraph("HiMCM 2026 - Tier 2: best regions inside the Tier 1 countrie
                    "inside the top 30 Tier 1 countries are scored, and the top 5 regions in each country go on to Tier 3.", BODY),
          Spacer(1, 8)]
 summary = [["Summary", ""],
-           [P("<b>Countries carried from Tier 1</b>"), P(f"Top 30 (Tier 1 v2 ranking); {info['countries carried from Tier 1'].split('|')[0].strip()} countries")],
+           [P("<b>Countries carried from Tier 1</b>"), P(f"Top 30 of the Tier 1 ranking; {info['countries carried from Tier 1'].split('|')[0].strip()} countries")],
            [P("<b>Countries with regional data</b>"), P(info["countries carried from Tier 1"].split(":")[-1].strip())],
            [P("<b>No regions / no regional data</b>"), P(info["no regional data"] + ", Iceland (missing education and transport data at region level)")],
            [P("<b>Regions ranked (>= 60% data)</b>"), P(info["regions with any data"].split("|")[1].split(":")[1].strip())],

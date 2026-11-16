@@ -1,0 +1,115 @@
+[
+ {
+  "criterion": "basic_water",
+  "countries": 214,
+  "unmatched": 0,
+  "years": "2016-2024 (median 2024)"
+ },
+ {
+  "criterion": "basic_sanitation",
+  "countries": 214,
+  "unmatched": 0,
+  "years": "2015-2024 (median 2024)"
+ },
+ {
+  "criterion": "internet_users",
+  "countries": 209,
+  "unmatched": 0,
+  "years": "2014-2025 (median 2024)"
+ },
+ {
+  "criterion": "traffic_deaths",
+  "countries": 190,
+  "unmatched": 0,
+  "years": "2013-2019 (median 2019)"
+ },
+ {
+  "criterion": "gini",
+  "countries": 165,
+  "unmatched": 0,
+  "years": "2010-2025 (median 2022)"
+ },
+ {
+  "criterion": "test_scores",
+  "countries": 172,
+  "unmatched": 0,
+  "years": "2020-2020 (median 2020)"
+ },
+ {
+  "criterion": "divorce_rate",
+  "countries": 95,
+  "unmatched": 0,
+  "years": "2002-2006"
+ },
+ {
+  "criterion": "uhc_service_coverage",
+  "countries": 193,
+  "unmatched": []
+ },
+ {
+  "criterion": "urban_improved_water",
+  "countries": 118,
+  "unmatched": []
+ },
+ {
+  "criterion": "urban_improved_sanitation",
+  "countries": 117,
+  "unmatched": []
+ },
+ {
+  "criterion": "city_internet_access",
+  "countries": 48,
+  "unmatched": []
+ },
+ {
+  "criterion": "city_traffic_fatalities",
+  "countries": 48,
+  "unmatched": []
+ },
+ {
+  "criterion": "income_inequality_gini",
+  "countries": 33,
+  "unmatched": []
+ },
+ {
+  "criterion": "public_transport_access",
+  "countries": 201,
+  "unmatched": []
+ },
+ {
+  "criterion": "open_space_access",
+  "countries": 199,
+  "unmatched": []
+ },
+ {
+  "criterion": "pm25_exposure",
+  "countries": 214,
+  "unmatched": [
+   " "
+  ]
+ },
+ {
+  "criterion": "serious_assault_rate",
+  "countries": 154,
+  "unmatched": [
+   "United Kingdom (Northern Ireland)",
+   "United Kingdom (Scotland)"
+  ]
+ },
+ {
+  "criterion": "robbery_rate",
+  "countries": 152,
+  "unmatched": [
+   "United Kingdom (Northern Ireland)",
+   "United Kingdom (Scotland)"
+  ]
+ },
+ {
+  "criterion": "theft_rate",
+  "countries": 144,
+  "unmatched": [
+   "United Kingdom (Northern Ireland)",
+   "United Kingdom (Scotland)"
+  ]
+ }
+]
