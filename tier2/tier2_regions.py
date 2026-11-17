@@ -2,7 +2,7 @@
 
 Same model as himcm26_simple.py: winsorize 5/95 -> MinMax 0-1 (flip "lower") -> entropy weights
 -> weighted average over criteria a region has -> rank regions with >= 60% data -> keep the top 20 regions overall.
-usage: python tier2_regions.py <oecd_raw dir> <countryInfo.txt> <tier1 ranking csv> <results dir>
+usage: python tier2_regions.py <oecd_raw dir> <countryInfo.txt> <tier1 ranking csv> <results dir> <oecd_city dir> <fua_located.csv>
 """
 import sys
 from pathlib import Path
@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
-RAW, GEONAMES, TIER1, OUT = map(Path, sys.argv[1:5])
+RAW, GEONAMES, TIER1, OUT, CITY, LOCATED = map(Path, sys.argv[1:7])
 COUNTRIES_TO_KEEP = 30   # same as the model's Step 1 setting
 REGIONS_TO_KEEP = 20   # the 20 highest-scoring regions go on to Tier 3
 MIN_DATA = 0.60
@@ -22,8 +22,8 @@ CRITERIA = {
     "homicide_rate":       ("lower",  "Crime",          "Intentional homicides per 100,000"),
     "vehicle_theft_rate":  ("lower",  "Crime",          "Motor vehicle thefts per 100,000"),
     "pm25_exposure":       ("lower",  "Environment",    "Mean population exposure to PM2.5 (ug/m3)"),
-    "tertiary_education":  ("higher", "Education",      "Adults 25-64 with tertiary education (%)"),
-    "transport_deaths":    ("lower",  "Transportation", "Deaths from transport accidents per 100,000"),
+    "green_space":         ("higher", "Environment",    "Green area in the region's cities (m2 per person; population-weighted average of its OECD urban areas)"),
+    "transit_access":      ("higher", "Transportation", "People within a 10-minute walk of a public transport stop (%; population-weighted average of the region's OECD urban areas)"),
 }
 
 def latest(df, value="OBS_VALUE"):
@@ -52,11 +52,34 @@ parts = {
     "homicide_rate":      latest(soc[soc.MEASURE == "HOMIC"]),
     "vehicle_theft_rate": latest(soc[(soc.MEASURE == "VEH_THEFT") & (soc.UNIT_MEASURE == "CS_10P5PS")]),
     "pm25_exposure":      latest(air),
-    "tertiary_education": latest(edu),
-    "transport_deaths":   latest(soc[soc.MEASURE == "MORT_ICDV_CRUDE_RATIO"]),
 }
 table = pd.DataFrame({k: v["OBS_VALUE"] for k, v in parts.items()})
 years = {k: f"{int(v.TIME_PERIOD.min())}-{int(v.TIME_PERIOD.max())}" for k, v in parts.items()}
+
+# green space and public transport access: the OECD has no regional figure, so each region gets the
+# average of the OECD urban areas (FUAs) inside it, weighted by city population
+grn = pd.read_csv(CITY / "DSD_FUA_ENV@DF_GREEN_AREA.csv", low_memory=False)
+grn = grn[grn.UNIT_MEASURE == "M2_PS"].set_index("REF_AREA").OBS_VALUE              # m2 per person, 2021
+pt = pd.read_csv(CITY / "DSD_FUA_TRAN@DF_PT_ACCESS.csv", low_memory=False)
+pt = pt[(pt.TRAVEL_TIME == "MN_LE10") & pt.OBS_VALUE.notna()]
+pt_year = int(pt.TIME_PERIOD.max())
+pt = pt.sort_values("TIME_PERIOD").groupby("REF_AREA").OBS_VALUE.last()            # % within 10-min walk
+fua = pd.read_csv(LOCATED, keep_default_na=False, na_values=[""])
+known = set(table.index)
+def region_of(s):
+    for c in str(s).split("|"):
+        for k in (c, c + "0"):            # NUTS level-1 'MT0' = OECD 'MT00'
+            if k in known: return k
+    return None
+fua["region"] = fua.nuts_or_tl2.map(region_of)
+fua = fua[fua.region.notna() & fua.town_pop.notna()]
+def pop_weighted(values):
+    f = fua.assign(v=fua.fua_code.map(values)).dropna(subset=["v"])
+    g = f.assign(wv=f.v * f.town_pop).groupby("region")
+    return g.wv.sum() / g.town_pop.sum()
+table["green_space"] = pop_weighted(grn); years["green_space"] = "2021"
+table["transit_access"] = pop_weighted(pt); years["transit_access"] = str(pt_year)
+table = table[list(CRITERIA)]
 
 # region -> country (iso3) from the OECD rows themselves
 country_of = pd.concat([soc[["REF_AREA", "COUNTRY"]], edu[["REF_AREA", "COUNTRY"]]]).drop_duplicates("REF_AREA")

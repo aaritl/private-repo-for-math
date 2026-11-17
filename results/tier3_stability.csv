@@ -1,10 +1,6 @@
 test,top10_overlap,spearman
-Equal weights (each criterion 1/6),10,0.9709706959706959
-Looser data rule (60% instead of 75%),10,0.9999999999999998
-No outlier cap (raw min-max),8,0.9470408446790777
-Leave out Air quality,8,0.9609890109890108
-Leave out Green space,7,0.9193223443223443
-Leave out Public transport,9,0.9828296703296703
-Leave out Everyday services,7,0.8463369963369962
-Leave out Jobs,8,0.7467948717948717
-Leave out Entertainment,6,0.9251373626373627
+Equal weights (each criterion 1/2),9,0.9961942349707519
+Looser data rule (60% instead of 75%),10,0.9999999999999999
+No outlier cap (raw min-max),8,0.9635998455540131
+Leave out Entertainment,5,0.888575637369012
+Leave out Diversity,5,0.6550048195344467

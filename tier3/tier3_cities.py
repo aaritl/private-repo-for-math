@@ -3,14 +3,16 @@
 Same model as Tier 1: cap at 5th/95th percentile -> rescale 0-1 (flip "lower") -> entropy weights
 (computed from real values only) -> weighted average over the criteria a city has -> rank cities with
 enough data -> top 10 cities.
+No criterion repeats Tier 1 or Tier 2: air quality, green space and public transport access are scored in Tier 2.
 usage: python tier3_cities.py <oecd_city dir> <fua_located.csv> <tier2_regions_to_tier3.csv> <results dir>
+       <wd_venues.csv> <city_foreign_born.csv> <OECD DSD_REG_MIGRANT@DF_MIGR_STOCK.csv>
 """
 import sys
 from pathlib import Path
 import numpy as np
 import pandas as pd
 
-CITY, LOCATED, TIER2, OUT, WHO, ENT = map(Path, sys.argv[1:7])
+CITY, LOCATED, TIER2, OUT, ENT, CITY_FB, REG_FB = map(Path, sys.argv[1:8])
 MIN_DATA = 0.75
 OUTLIER_CAP = 0.05
 FIRST_YEAR = 2015
@@ -19,12 +21,9 @@ DROP_REGIONS = {"FRY5"}   # Mayotte: overseas territory that only reached France
 
 # criterion: (direction, label, description)
 CRITERIA = {
-    "pm25":         ("lower",  "Air quality",     "Population exposure to PM2.5 (ug/m3)"),
-    "green_area":   ("higher", "Green space",     "Green area in the urban centre (m2 per person)"),
-    "transit":      ("higher", "Public transport", "People within a 10-minute walk of a public transport stop (%)"),
-    "services":     ("higher", "Everyday services", "People within a 15-minute walk of a pharmacy, primary school and childcare (%, average)"),
-    "unemployment": ("lower",  "Jobs",            "Unemployment rate (%); region's rate where the city has none"),
+    # air quality, green space and public transport are NOT Tier 3 criteria: they are scored in Tier 2 (no double counting)
     "entertainment": ("higher", "Entertainment",  "log(1 + number of notable museums, theatres, cinemas, concert halls, galleries, music venues, stadiums, zoos and theme parks within 5 km of the centre)"),
+    "diversity":    ("higher", "Diversity",       "Residents born in another country (%); region's share where the city has none"),
 }
 
 def read(name):
@@ -33,8 +32,6 @@ def latest(df):
     df = df[(df.TIME_PERIOD >= FIRST_YEAR) & df.OBS_VALUE.notna()]
     return df.sort_values("TIME_PERIOD").groupby("REF_AREA").last()
 
-grn = read("DSD_FUA_ENV@DF_GREEN_AREA"); grn = grn[grn.UNIT_MEASURE == "M2_PS"]
-pt = read("DSD_FUA_TRAN@DF_PT_ACCESS"); pt = pt[pt.TRAVEL_TIME == "MN_LE10"]
 sv = read("DSD_FUA_TRAN@DF_SERVICE_ACCESS"); sv = sv[sv.TRAVEL_TIME == "MN_LE15"]
 lab = read("DSD_FUA_LAB@DF_LABOUR")
 lab = lab[(lab.MEASURE == "UNE_RATE") & (lab.TIME_PERIOD >= 2018)]
@@ -44,10 +41,8 @@ reg = reg[(reg.MEASURE == "UNE_RATE") & (reg.SEX == "_T") & (reg.AGE == "Y15T64"
 REGION_UNEMP = latest(reg)
 
 sv_latest = sv[sv.OBS_VALUE.notna()].sort_values("TIME_PERIOD").groupby(["REF_AREA", "SERVICE"]).OBS_VALUE.last().unstack()
-parts = {"green_area": latest(grn).OBS_VALUE, "transit": latest(pt).OBS_VALUE,
-         "services": sv_latest.mean(axis=1), "unemployment": latest(lab).OBS_VALUE}
-years = {"green_area": latest(grn).TIME_PERIOD, "transit": latest(pt).TIME_PERIOD,
-         "services": sv.groupby("REF_AREA").TIME_PERIOD.max(), "unemployment": latest(lab).TIME_PERIOD}
+parts = {"services": sv_latest.mean(axis=1), "unemployment": latest(lab).OBS_VALUE}
+years = {"services": sv.groupby("REF_AREA").TIME_PERIOD.max(), "unemployment": latest(lab).TIME_PERIOD}
 data = pd.DataFrame(parts)
 
 # ---------- 1. keep only cities inside the Tier 2 winning regions ----------
@@ -66,34 +61,6 @@ cities = loc[loc.region_code.notna()].merge(t2[["region_code", "region", "countr
 cities = cities.set_index("fua_code").join(data, how="left")
 cities = cities.rename(columns={"fua_name": "city"})
 
-# PM2.5 from the WHO Ambient Air Quality Database (monitor measurements). The OECD city air file has
-# unusable values (e.g. 2023 ~0.2 everywhere, German cities 30-40 ug/m3), so it is not used.
-# Each city takes the nearest WHO monitoring city (same country, within 25 km), latest year >= 2018.
-who = pd.read_csv(WHO)
-who = who[who.pm25_concentration.notna() & (who.year >= 2018)].sort_values("year").groupby("city").last().reset_index()
-ISO3 = {"AU": "AUS", "AT": "AUT", "BE": "BEL", "CA": "CAN", "CZ": "CZE", "DK": "DNK", "EE": "EST", "FI": "FIN", "FR": "FRA",
-        "DE": "DEU", "HU": "HUN", "IE": "IRL", "JP": "JPN", "LU": "LUX", "MT": "MLT", "NZ": "NZL", "NO": "NOR", "PL": "POL",
-        "PT": "PRT", "SK": "SVK", "SI": "SVN", "KR": "KOR", "ES": "ESP", "SE": "SWE", "CH": "CHE", "NL": "NLD", "GB": "GBR"}
-def km(lat1, lon1, lat2, lon2):
-    lat1, lon1, lat2, lon2 = map(np.radians, (lat1, lon1, lat2, lon2))
-    a = np.sin((lat2 - lat1) / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin((lon2 - lon1) / 2) ** 2
-    return 6371 * 2 * np.arcsin(np.sqrt(a))
-pm, pm_year, pm_src = {}, {}, {}
-for code, r in cities.iterrows():
-    w = who[who.iso3 == ISO3.get(r.iso2)]
-    if w.empty or pd.isna(r.lat): continue
-    dist = km(r.lat, r.lon, w.latitude.values, w.longitude.values)
-    i = int(np.nanargmin(dist))
-    if dist[i] <= 25:
-        pm[code], pm_year[code], pm_src[code] = w.pm25_concentration.iloc[i], w.year.iloc[i], w.city.iloc[i]
-cities["pm25"] = pd.Series(pm); cities["pm25_who_city"] = pd.Series(pm_src)
-# cities with no WHO monitor nearby (e.g. Sydney) use their region's PM2.5 from Tier 2 (OECD), so missing
-# air data cannot push a city up the ranking
-REGION_PM = pd.read_csv(TIER2.parent / "tier2_region_ranking.csv").set_index("region_code").pm25_exposure
-cities["pm25_source"] = np.where(cities["pm25"].notna(), "WHO city monitor", "region (OECD)")
-cities.loc[cities.pm25.isna(), "pm25"] = cities.loc[cities.pm25.isna(), "region_code"].map(REGION_PM)
-years["pm25"] = pd.Series(pm_year)
-
 # Jobs: the city's own unemployment rate (2018 or later); if the OECD has none for that city,
 # the unemployment rate of its Tier 2 region (so missing data cannot push a city up the ranking)
 own = cities["unemployment"].notna()
@@ -107,6 +74,25 @@ cities["venues"] = pd.to_numeric(ent.reindex(cities.index), errors="coerce")
 # log scale: venue counts are very lopsided (Paris 747, most cities 10-50). On a log scale the step from
 # 10 to 50 venues counts more than 700 to 740 (diminishing returns), and one huge city cannot set the scale.
 cities["entertainment"] = np.log1p(cities["venues"])
+# Diversity: share of residents born abroad. City value from Eurostat Urban Audit (European cities);
+# otherwise the share in its Tier 2 region (OECD, ages 15-64); New Zealand has neither, so the national
+# share is used (UN international migrant stock via World Bank SM.POP.TOTL.ZS, 2024: 28.2%).
+cfb = pd.read_csv(CITY_FB).set_index("fua_code")
+cities["diversity"] = cfb.foreign_born.reindex(cities.index)
+rfb = pd.read_csv(REG_FB, low_memory=False)
+rfb = rfb[(rfb.MEASURE == "POP") & (rfb.ORIGIN == "FB") & (rfb.UNIT_MEASURE == "PT_POP_SUB") & (rfb.AGE == "Y15T64")
+          & (rfb.SEX == "_T") & (rfb.EDUCATION_LEV == "_T")]
+REGION_FB = latest(rfb)
+COUNTRY_FB = {"NZ": (28.2, 2024)}
+own = cities["diversity"].notna()
+cities["diversity_source"] = np.where(own, "city (Eurostat)", "region (OECD)")
+cities.loc[~own, "diversity"] = cities.loc[~own, "region_code"].map(REGION_FB.OBS_VALUE)
+miss = cities.diversity.isna() & cities.iso2.isin(COUNTRY_FB)
+cities.loc[miss, "diversity"] = cities.loc[miss, "iso2"].map(lambda k: COUNTRY_FB[k][0])
+cities.loc[miss, "diversity_source"] = "country (UN)"
+years["diversity"] = pd.concat([cfb.year.reindex(cities.index[own]), REGION_FB.TIME_PERIOD.reindex(cities.region_code[~own]),
+                                pd.Series([COUNTRY_FB[k][1] for k in cities.iso2[miss]], dtype=float)]).dropna()
+
 YEARS = {k: f"{int(v.min())}" if v.min() == v.max() else f"{int(v.min())}-{int(v.max())}" for k, v in years.items()}
 YEARS["entertainment"] = "2026 (Wikidata snapshot)"
 
@@ -149,7 +135,7 @@ def rho(a, b):
     return a[i].corr(b[i], method="spearman")
 checks = []
 eq, _, _ = score(cities, weights=pd.Series(1.0, index=list(CRITERIA)))
-checks.append(("Equal weights (each criterion 1/6)", len(top(ranked) & top(eq)), rho(ranked, eq)))
+checks.append(("Equal weights (each criterion 1/2)", len(top(ranked) & top(eq)), rho(ranked, eq)))
 loose, _, _ = score(cities, min_data=0.60)
 checks.append(("Looser data rule (60% instead of 75%)", len(top(ranked) & top(loose)), rho(ranked, loose)))
 nocap, _, _ = score(cities, cap=0)
@@ -166,7 +152,7 @@ freq = freq[freq > 0].sort_values(ascending=False)
 N_VARIANTS = len(variants)
 OUT.mkdir(parents=True, exist_ok=True)
 cols = ["rank", "city", "country", "region", "region_code", "score", "data_share"] + list(CRITERIA) + \
-       ["venues", "unemployment_source", "pm25_source", "pm25_who_city", "lat", "lon"]
+       ["venues", "unemployment_source", "diversity_source", "lat", "lon"]
 ranked.reset_index().rename(columns={"index": "fua_code"})[["fua_code"] + cols].to_csv(OUT / "tier3_city_ranking.csv", index=False)
 scaled.loc[ranked.index].assign(city=ranked.city, country=ranked.country, rank=ranked["rank"]).to_csv(OUT / "tier3_grades.csv", index_label="fua_code")
 pd.DataFrame({"criterion": list(CRITERIA), "label": [CRITERIA[c][1] for c in CRITERIA],

@@ -1,7 +1,3 @@
 criterion,label,direction,years,cities_with_data,weight
-pm25,Air quality,lower,2019-2025,67,0.12832723980119518
-green_area,Green space,higher,2021,60,0.180877411334458
-transit,Public transport,higher,2023,58,0.08506049576882535
-services,Everyday services,higher,2024,67,0.2187097833204796
-unemployment,Jobs,lower,2018-2025,67,0.221250318205881
-entertainment,Entertainment,higher,2026 (Wikidata snapshot),67,0.16577475156916083
+entertainment,Entertainment,higher,2026 (Wikidata snapshot),44,0.44852776043081094
+diversity,Diversity,higher,2013-2025,44,0.551472239569189

@@ -1,23 +1,22 @@
 fua_code,city,country,times_in_top10,out_of,main_rank
-UK007F,Edinburgh,United Kingdom,10,10,1.0
-NZL03F,Wellington,New Zealand,10,10,2.0
-AUS07F,Canberra,Australia,9,10,4.0
-NO002F,Bergen,Norway,9,10,3.0
-NO001F,Oslo,Norway,9,10,8.0
-UK561F,Torbay,United Kingdom,9,10,5.0
-UK004F,Glasgow,United Kingdom,8,10,7.0
-NO003F,Trondheim,Norway,8,10,6.0
-UK011F,Bristol,United Kingdom,6,10,9.0
-UK023F,Portsmouth,United Kingdom,5,10,10.0
-NL006F,Amersfoort,The Netherlands,2,10,13.0
-NL042F,Utrecht,The Netherlands,2,10,12.0
-UK576F,Crawley,United Kingdom,2,10,16.0
-UK016F,Aberdeen,United Kingdom,2,10,17.0
-SE001F,Stockholm,Sweden,2,10,27.0
-IE001F,Dublin,Ireland,1,10,18.0
-NL040F,Soest,The Netherlands,1,10,28.0
-ES019F,Bilbao,Spain,1,10,45.0
-UK551F,Falkirk,United Kingdom,1,10,30.0
-UK550F,Dundee City,United Kingdom,1,10,21.0
-UK031F,Bath and North East Somerset,United Kingdom,1,10,11.0
-NO004F,Stavanger,Norway,1,10,15.0
+SE002F,Göteborg,Sweden,6,6,1.0
+AUS07F,Canberra,Australia,5,6,5.0
+DE089F,Lübeck,Germany,5,6,7.0
+NZL03F,Wellington,New Zealand,5,6,3.0
+UK007F,Edinburgh,United Kingdom,5,6,2.0
+DE037F,Saarbrücken,Germany,5,6,4.0
+DE049F,Flensburg,Germany,4,6,10.0
+UK004F,Glasgow,United Kingdom,4,6,6.0
+UK016F,Aberdeen,United Kingdom,4,6,8.0
+NO002F,Bergen,Norway,4,6,9.0
+NZL12F,Rotorua,New Zealand,2,6,16.0
+SE014F,Borås,Sweden,2,6,12.0
+DE052F,Neumünster,Germany,1,6,23.0
+DE125F,Jena,Germany,1,6,13.0
+FI002F,Tampere/Tammerfors,Finland,1,6,22.0
+DE028F,Weimar,Germany,1,6,15.0
+UK550F,Dundee City,United Kingdom,1,6,25.0
+IE004F,Galway,Ireland,1,6,14.0
+NZL05F,Tauranga,New Zealand,1,6,16.0
+DE036F,Kiel,Germany,1,6,11.0
+UK012F,Belfast,United Kingdom,1,6,18.0
