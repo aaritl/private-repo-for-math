@@ -7,7 +7,7 @@ plt.rcParams.update({"font.family": "serif", "font.serif": ["Times New Roman", "
 ROWS = [
  ("Tier 2", "Homicide rate", "Intentional homicides per 100,000", "OECD Regional Statistics: Safety – Regions", "2020–2025"),
  ("", "Vehicle theft rate", "Motor vehicle thefts per 100,000", "OECD Regional Statistics: Safety – Regions", "2020–2025"),
- ("", "Air quality", "Average exposure to PM2.5 (µg/m³)", "OECD Regional Statistics: Exposure to air pollution – Regions", "2023"),
+ ("", "Air quality", "Average exposure to PM2.5 (µg/m³)", "OECD: Exposure to air pollution – Local areas (region totals)", "2023"),
  ("", "Green space", "Green area per person (m²), average of the region's cities", "OECD Cities (Functional Urban Areas): Green areas", "2021"),
  ("", "Public transport", "Share of people within a 10-minute walk of a stop (%), average of the region's cities", "OECD Cities (Functional Urban Areas): Access to public transport", "2023"),
  ("Tier 3", "Diversity", "Share of residents born in another country (%)", "Eurostat Urban Audit (cities); OECD Foreign-born population – Regions (if no city value); UN International Migrant Stock via World Bank (New Zealand)", "2013–2025"),
