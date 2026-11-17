@@ -1,0 +1,37 @@
+fua_code,city,country,times_in_top10,out_of,main_rank
+AUS01F,Greater Sydney,Australia,8,10,2.0
+UK007F,Edinburgh,United Kingdom,8,10,1.0
+CH002F,Zürich,Switzerland,7,10,3.0
+CH004F,Basel,Switzerland,7,10,4.0
+NL017F,'s-Gravenhage,The Netherlands,6,10,6.0
+BE002F,Antwerpen,Belgium,5,10,10.0
+JPN01F,Tokyo,Japan,5,10,5.0
+DE007F,Stuttgart,Germany,5,10,8.0
+NO002F,Bergen,Norway,4,10,23.0
+CZ001F,Praha,Czechia,4,10,7.0
+AUS07F,Canberra,Australia,4,10,17.0
+NZL03F,Wellington,New Zealand,4,10,9.0
+NL008F,Arnhem,The Netherlands,3,10,11.0
+NL001F,Amsterdam,The Netherlands,2,10,13.0
+DE115F,Reutlingen,Germany,2,10,28.0
+SE001F,Stockholm,Sweden,2,10,41.0
+DE009F,Dresden,Germany,2,10,26.0
+AUS02F,Greater Melbourne,Australia,2,10,12.0
+BE012F,Mechelen,Belgium,2,10,30.0
+UK561F,Torbay,United Kingdom,2,10,18.0
+HU001F,Budapest,Hungary,1,10,19.0
+UK012F,Belfast,United Kingdom,1,10,96.0
+JPN02F,Osaka,Japan,1,10,40.0
+FR001F,Paris,France,1,10,52.0
+UK576F,Crawley,United Kingdom,1,10,73.0
+UK008F,Manchester,United Kingdom,1,10,53.0
+UK004F,Glasgow,United Kingdom,1,10,33.0
+FI001F,Helsinki/Helsingfors,Finland,1,10,63.0
+DE051F,Konstanz,Germany,1,10,38.0
+DE033F,Karlsruhe,Germany,1,10,16.0
+DE003F,München,Germany,1,10,15.0
+DE002F,Hamburg,Germany,1,10,36.0
+CH006F,Luzern,Switzerland,1,10,39.0
+CAN03F,Vancouver,Canada,1,10,21.0
+BE009F,Mons,Belgium,1,10,92.0
+PT001F,Lisboa,Portugal,1,10,45.0
