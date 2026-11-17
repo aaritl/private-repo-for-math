@@ -1,7 +1,7 @@
 """Tier 2 = regions INSIDE the best Tier 1 countries (funnel), using OECD regional data (TL2 regions).
 
 Same model as himcm26_simple.py: winsorize 5/95 -> MinMax 0-1 (flip "lower") -> entropy weights
--> weighted average over criteria a region has -> rank regions with >= 60% data -> keep top 5 per country.
+-> weighted average over criteria a region has -> rank regions with >= 60% data -> keep the top 20 regions overall.
 usage: python tier2_regions.py <oecd_raw dir> <countryInfo.txt> <tier1 ranking csv> <results dir>
 """
 import sys
@@ -12,7 +12,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 RAW, GEONAMES, TIER1, OUT = map(Path, sys.argv[1:5])
 COUNTRIES_TO_KEEP = 30   # same as the model's Step 1 setting
-KEEP_PER_PARENT = 5
+REGIONS_TO_KEEP = 20   # the 20 highest-scoring regions go on to Tier 3
 MIN_DATA = 0.60
 OUTLIER_CAP = 0.05
 FIRST_YEAR = 2015        # ignore values older than this
@@ -105,19 +105,19 @@ def score(table, weights=None):
 
 ranked, weights = score(table)
 ranked = ranked[ranked.rank_overall.notna()]
-winners = ranked[ranked.rank_in_country <= KEEP_PER_PARENT]
+winners = ranked[ranked.rank_overall <= REGIONS_TO_KEEP]
 
 # robustness: equal weights
 eq, _ = score(table, pd.Series(1.0, index=list(CRITERIA)))
 eq = eq[eq.rank_overall.notna()]
 rho = ranked.set_index("region_code").rank_overall.corr(eq.set_index("region_code").rank_overall, method="spearman")
-eq_win = eq[eq.rank_in_country <= KEEP_PER_PARENT]
+eq_win = eq[eq.rank_overall <= REGIONS_TO_KEEP]
 same_winners = len(set(winners.region_code) & set(eq_win.region_code))
 
 OUT.mkdir(parents=True, exist_ok=True)
 cols = ["rank_overall", "rank_in_country", "country", "region", "region_code", "score", "data_share"] + list(CRITERIA)
 ranked[cols].to_csv(OUT / "tier2_region_ranking.csv", index=False)
-winners.sort_values(["country", "rank_in_country"])[cols].to_csv(OUT / "tier2_regions_to_tier3.csv", index=False)
+winners.sort_values("rank_overall")[cols].to_csv(OUT / "tier2_regions_to_tier3.csv", index=False)
 
 # ---------- 5. report to stdout (picked up by the PDF script) ----------
 print("countries carried from Tier 1:", len(best), "| with OECD regions:", table.iso3.nunique())

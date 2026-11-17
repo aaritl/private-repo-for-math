@@ -66,14 +66,14 @@ def fmt(v):
 
 story = [Paragraph("HiMCM 2026 - Tier 2: best regions inside the Tier 1 countries", H1),
          Paragraph(f"Generated {datetime.date.today():%B %d, %Y}. Tier 2 is run on the results of Tier 1: only regions "
-                   "inside the top 30 Tier 1 countries are scored, and the top 5 regions in each country go on to Tier 3.", BODY),
+                   "inside the top 30 Tier 1 countries are scored, and the 20 highest-scoring regions go on to Tier 3.", BODY),
          Spacer(1, 8)]
 summary = [["Summary", ""],
            [P("<b>Countries carried from Tier 1</b>"), P(f"Top 30 of the Tier 1 ranking; {info['countries carried from Tier 1'].split('|')[0].strip()} countries")],
            [P("<b>Countries with regional data</b>"), P(info["countries carried from Tier 1"].split(":")[-1].strip())],
            [P("<b>No regions / no regional data</b>"), P(info["no regional data"] + ", Iceland (missing education and transport data at region level)")],
            [P("<b>Regions ranked (>= 60% data)</b>"), P(info["regions with any data"].split("|")[1].split(":")[1].strip())],
-           [P("<b>Regions passed to Tier 3</b>"), P(f"{len(winners)} (top 5 per country; fewer where a country has fewer regions)")],
+           [P("<b>Regions passed to Tier 3</b>"), P(f"{len(winners)} (the 20 highest-scoring regions overall)")],
            [P("<b>Top 5 regions overall</b>"), P(", ".join(ranked.head(5).region + " (" + ranked.head(5).country + ")"))],
            [P("<b>Largest weight</b>"), P(f"{SHORT[max(weights, key=weights.get)]} ({max(weights.values()):.0f}%)")],
            [P("<b>Stability (equal weights)</b>"), P(info["equal weights"])]]
@@ -84,7 +84,7 @@ story += [Paragraph("How Tier 2 was run", H2), Paragraph(
     "Japanese regions such as Southern-Kanto). <b>Model:</b> identical to <i>himcm26_simple.py</i>: values capped at the "
     "5th/95th percentile, rescaled 0-1 (flipped where lower is better), entropy weights, weighted average over the criteria "
     "a region has, ranked if it has at least 60% of the weight. All regions are scored together (so weights are shared), "
-    "then the top 5 inside each country are kept.", BODY)]
+    "then the 20 highest-scoring regions are kept.", BODY)]
 rows = [["Criterion", "Folder", "Better", "Years", "Regions", "Weight"]]
 for k, (d, folder, desc) in CRITERIA.items():
     rows.append([P(desc), P(folder), d, years[k], str(int(ranked[k].notna().sum())), f"{weights[k]:.1f}%"])
@@ -99,7 +99,7 @@ story += [tbl(rows, [0.3 * inch, 1.55 * inch, 1.0 * inch, 0.45 * inch, 0.4 * inc
           Paragraph("'-' = no data. Regions with less than 100% data are scored on the criteria they have.", SMALL),
           Spacer(1, 6), Image(str(FIG / "top15.png"), width=4.6 * inch, height=3.16 * inch)]
 
-story += [PageBreak(), Paragraph("Regions passed to Tier 3 (top 5 per country, by Tier 1 rank)", H2)]
+story += [PageBreak(), Paragraph("Regions passed to Tier 3 (the top 20 regions, grouped by Tier 1 rank)", H2)]
 rows = [["T1 #", "Country", "#", "Region", "Score", "Data"]]
 order = sorted(winners.country.unique(), key=lambda c: t1_rank.get(c, 99))
 for c in order:
@@ -120,8 +120,8 @@ for head, text in [
     ("City-states and microstates.", "Monaco, Singapore, Macao, San Marino, Andorra and the Bahamas have no OECD regions. They are "
      "effectively one city each and can go straight to Tier 3 if you want to keep them."),
     ("Iceland.", "Its 2 regions have only homicide, vehicle theft and PM2.5 (51% of the weight), below the 60% minimum."),
-    ("Mayotte.", "France's 5th region is Mayotte, an overseas department scored on 65% of the data (no education value). "
-     "Consider excluding overseas regions."),
+    ("Overseas regions.", "France's overseas regions (Mayotte, Reunion, Guadeloupe, Martinique, French Guiana) are scored with the "
+     "rest, but none reach the top 20, so none go on to Tier 3."),
     ("Single-region countries.", "Estonia and Malta are one TL2 region each, so the region is the whole country."),
 ]:
     story += [Paragraph(f"<b>{head}</b> {text}", BODY), Spacer(1, 5)]
